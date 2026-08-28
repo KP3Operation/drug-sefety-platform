@@ -54,9 +54,9 @@ async def cek_interaksi(data: ObatRequest):
         ]
         
         if hasil.empty:
-            interaction_desc = "Deskripsi interaksi tidak ditemukan dalam dataset."
-            urgency_label = "⚪ - TIDAK ADA DATA / BELUM TERVERIFIKASI."
-            sumary_text = "Data interaksi untuk kombinasi obat ini tidak tersedia."
+            interaction_desc = "No interaction description was found in the dataset."
+            urgency_label = "⚪ - NO DATA / NOT YET VERIFIED."
+            sumary_text = "Interaction data for this drug combination is not available."
         else:
             row = hasil.iloc[0]
             interaction_desc = row['Interaction description']
@@ -85,8 +85,8 @@ async def cek_interaksi(data: ObatRequest):
                 "quick_summary": sumary_text,
                 "risk": interaction_desc,
                 "medication_details": {
-                    data.obat_1.upper(): {"utility": desc_a},
-                    data.obat_2.upper(): {"utility": desc_b}
+                    data.obat_1.upper(): {"pharmacology_info": desc_a},
+                    data.obat_2.upper(): {"pharmacology_info": desc_b}
                 }
             }
         }

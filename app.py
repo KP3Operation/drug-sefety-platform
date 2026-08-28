@@ -39,6 +39,21 @@ def home():
         "model_loaded": 'model' in globals()
     }
 
+@app.get("/api/obat")
+def semua_obat():
+    if 'df_info' not in globals() or df_info is None:
+        raise HTTPException(status_code=500, detail="Dataset informasi obat belum dimuat di server.")
+
+    return {
+        "status": "success",
+        "total_obat": len(df_info),
+        "obat": (
+            df_info[['drug_name', 'description']]
+            .fillna("Data not available")
+            .to_dict(orient="records")
+        )
+    }
+
 @app.post("/api/cek-interaksi")
 async def cek_interaksi(data: ObatRequest):
     if 'df_ddi' not in globals() or df_ddi is None:

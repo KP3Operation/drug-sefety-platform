@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Drug Interaction Checker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    background: #f5f5f7;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #1c1c1e; }
+  }
+  .glass {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  @media (prefers-color-scheme: dark) {
+    .glass { background: rgba(44,44,46,0.72); }
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(120,120,128,0.3); border-radius: 999px; }
+  .spinner {
+    border: 2px solid rgba(0,0,0,0.1);
+    border-top-color: #007AFF;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fade-in { animation: fadeIn 0.25s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body class="min-h-screen text-[#1d1d1f] dark:text-[#f5f5f7]">
+
+<div class="max-w-3xl mx-auto px-4 py-10 space-y-6">
+
+  <!-- Title bar -->
+  <div class="text-center space-y-1">
+    <h1 class="text-2xl font-semibold tracking-tight">Drug Interaction Checker</h1>
+  </div>
+
+  <!-- Status banner -->
+  <div id="status-banner" class="hidden glass rounded-2xl border border-black/5 dark:border-white/10 shadow-xl shadow-black/5 px-4 py-3 text-sm"></div>
+
+  <!-- Form Card -->
+  <div class="glass rounded-2xl border border-black/5 dark:border-white/10 shadow-xl shadow-black/5 p-6 space-y-4">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-[#6e6e73] dark:text-[#a1a1a6]">Obat 1</label>
+        <input id="obat1" list="drug-list" placeholder="mis. Nifedipine"
+          class="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white/80 dark:bg-black/20 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#007AFF]/50 transition" />
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-[#6e6e73] dark:text-[#a1a1a6]">Obat 2</label>
+        <input id="obat2" list="drug-list" placeholder="mis. Esmolol"
+          class="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white/80 dark:bg-black/20 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#007AFF]/50 transition" />
+      </div>
+    </div>
+    <datalist id="drug-list"></datalist>
+
+    <button id="btn-check"
+      class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#007AFF] hover:bg-[#0066d6] active:scale-95 transition text-white text-sm font-medium rounded-xl px-5 py-2.5 shadow-sm">
+      <span id="btn-spinner" class="spinner hidden"></span>
+      <span id="btn-label">Cek Interaksi</span>
+    </button>
+  </div>
+
+  <!-- Result Card -->
+  <div id="result-card" class="hidden glass rounded-2xl border border-black/5 dark:border-white/10 shadow-xl shadow-black/5 p-6 space-y-4 fade-in">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <h2 id="result-pair" class="text-lg font-semibold"></h2>
+      <span id="result-badge" class="text-xs font-semibold px-3 py-1 rounded-full"></span>
+    </div>
+    <p id="result-summary" class="text-sm text-[#6e6e73] dark:text-[#a1a1a6]"></p>
+    <div class="rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/5 dark:border-white/10 p-4">
+      <p class="text-xs font-medium uppercase tracking-wide text-[#6e6e73] dark:text-[#a1a1a6] mb-1">Risk</p>
+      <p id="result-risk" class="text-sm"></p>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <div class="rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/5 dark:border-white/10 p-4">
+        <p id="detail-1-name" class="text-xs font-semibold uppercase tracking-wide mb-1"></p>
+        <p id="detail-1-desc" class="text-sm text-[#6e6e73] dark:text-[#a1a1a6]"></p>
+      </div>
+      <div class="rounded-xl bg-black/[0.03] dark:bg-white/[0.06] border border-black/5 dark:border-white/10 p-4">
+        <p id="detail-2-name" class="text-xs font-semibold uppercase tracking-wide mb-1"></p>
+        <p id="detail-2-desc" class="text-sm text-[#6e6e73] dark:text-[#a1a1a6]"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Browse drugs -->
+  <div class="glass rounded-2xl border border-black/5 dark:border-white/10 shadow-xl shadow-black/5 p-6 space-y-3">
+    <button id="toggle-browse" class="w-full flex items-center justify-between text-sm font-medium">
+      <span>Cari Obat (<span id="drug-count">-</span> total)</span>
+      <span id="toggle-icon" class="transition-transform">▾</span>
+    </button>
+    <div id="browse-panel" class="hidden space-y-3">
+      <input id="drug-search" placeholder="Ketik untuk mencari nama obat..."
+        class="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white/80 dark:bg-black/20 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#007AFF]/50 transition" />
+      <div id="drug-results" class="max-h-64 overflow-y-auto divide-y divide-black/5 dark:divide-white/10 rounded-xl border border-black/5 dark:border-white/10"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API_OBAT = '/api/obat';
+  const API_CEK = '/api/cek-interaksi';
+
+  let allDrugs = [];
+
+  function showBanner(message, kind) {
+    const el = document.getElementById('status-banner');
+    const colors = {
+      error: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
+      info: 'bg-black/5 text-[#6e6e73] dark:text-[#a1a1a6] border-black/5'
+    };
+    el.className = `rounded-2xl border shadow-xl shadow-black/5 px-4 py-3 text-sm ${colors[kind] || colors.info}`;
+    el.textContent = message;
+    el.classList.remove('hidden');
+  }
+
+  function hideBanner() {
+    document.getElementById('status-banner').classList.add('hidden');
+  }
+
+  async function loadDrugs() {
+    try {
+      const res = await fetch(API_OBAT);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      allDrugs = data.obat || [];
+      document.getElementById('drug-count').textContent = data.total_obat ?? allDrugs.length;
+
+      const datalist = document.getElementById('drug-list');
+      datalist.innerHTML = allDrugs.map(d => `<option value="${escapeHtml(d.drug_name)}"></option>`).join('');
+
+      renderDrugResults(allDrugs.slice(0, 50));
+    } catch (err) {
+      showBanner(`Gagal memuat daftar obat: ${err.message}`, 'error');
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderDrugResults(list) {
+    const container = document.getElementById('drug-results');
+    if (!list.length) {
+      container.innerHTML = `<div class="p-4 text-sm text-[#6e6e73] dark:text-[#a1a1a6]">Tidak ada hasil.</div>`;
+      return;
+    }
+    container.innerHTML = list.map(d => `
+      <div class="p-3 text-sm">
+        <p class="font-medium">${escapeHtml(d.drug_name)}</p>
+        <p class="text-xs text-[#6e6e73] dark:text-[#a1a1a6] line-clamp-2">${escapeHtml((d.description || '').slice(0, 140))}${(d.description || '').length > 140 ? '…' : ''}</p>
+      </div>
+    `).join('');
+  }
+
+  function badgeClasses(label) {
+    if (label.includes('HIGH')) return 'bg-red-500/15 text-red-600 dark:text-red-400';
+    if (label.includes('MODERATE')) return 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400';
+    return 'bg-black/10 text-[#6e6e73] dark:text-[#a1a1a6]';
+  }
+
+  async function checkInteraction() {
+    const obat1 = document.getElementById('obat1').value.trim();
+    const obat2 = document.getElementById('obat2').value.trim();
+    hideBanner();
+
+    if (!obat1 || !obat2) {
+      showBanner('Isi kedua nama obat terlebih dahulu.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btn-check');
+    const spinner = document.getElementById('btn-spinner');
+    const label = document.getElementById('btn-label');
+    btn.disabled = true;
+    spinner.classList.remove('hidden');
+    label.textContent = 'Memeriksa...';
+    document.getElementById('result-card').classList.add('hidden');
+
+    try {
+      const res = await fetch(API_CEK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ obat_1: obat1, obat_2: obat2 })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+
+      renderResult(data.clinical_report, obat1, obat2);
+    } catch (err) {
+      showBanner(`Gagal cek interaksi: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      spinner.classList.add('hidden');
+      label.textContent = 'Cek Interaksi';
+    }
+  }
+
+  function renderResult(report, obat1, obat2) {
+    document.getElementById('result-pair').textContent = report.drug_pair;
+    const badge = document.getElementById('result-badge');
+    badge.textContent = report.level_of_urgency;
+    badge.className = `text-xs font-semibold px-3 py-1 rounded-full ${badgeClasses(report.level_of_urgency)}`;
+    document.getElementById('result-summary').textContent = report.quick_summary;
+    document.getElementById('result-risk').textContent = report.risk;
+
+    const details = report.medication_details;
+    const key1 = obat1.toUpperCase();
+    const key2 = obat2.toUpperCase();
+    document.getElementById('detail-1-name').textContent = key1;
+    document.getElementById('detail-1-desc').textContent = details[key1]?.pharmacology_info || 'Data not available';
+    document.getElementById('detail-2-name').textContent = key2;
+    document.getElementById('detail-2-desc').textContent = details[key2]?.pharmacology_info || 'Data not available';
+
+    document.getElementById('result-card').classList.remove('hidden');
+  }
+
+  document.getElementById('btn-check').addEventListener('click', checkInteraction);
+
+  document.getElementById('toggle-browse').addEventListener('click', () => {
+    const panel = document.getElementById('browse-panel');
+    const icon = document.getElementById('toggle-icon');
+    panel.classList.toggle('hidden');
+    icon.style.transform = panel.classList.contains('hidden') ? '' : 'rotate(180deg)';
+  });
+
+  document.getElementById('drug-search').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    const filtered = q
+      ? allDrugs.filter(d => d.drug_name.toLowerCase().includes(q)).slice(0, 50)
+      : allDrugs.slice(0, 50);
+    renderDrugResults(filtered);
+  });
+
+  loadDrugs();
+</script>
+
+</body>
+</html>

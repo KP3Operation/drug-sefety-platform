@@ -31,17 +31,31 @@ drug-sefety-platform/
 TensorFlow belum menyediakan wheel untuk Python 3.14, jadi gunakan **Python 3.11** untuk virtual
 environment proyek ini.
 
+### Otomatis (Recommended)
+
+Jalankan script berikut dari root folder — otomatis membuat `.venv` dengan Python 3.11 (jika
+belum ada), install `requirements.txt`, lalu langsung menjalankan server:
+
+```
+.\run.ps1
+```
+
+Setelah `.venv` dan dependencies sudah terpasang, pakai flag `-SkipInstall` untuk start lebih
+cepat tanpa mengulang instalasi:
+
+```
+.\run.ps1 -SkipInstall
+```
+
+### Manual
+
 ```
 py -3.11 -m venv .venv
 .\.venv\Scripts\pip.exe install -r requirements.txt
-```
-
-## Menjalankan Aplikasi
-
-```
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
+Setelah server berjalan (baik lewat script maupun manual):
 - Halaman testing frontend: http://127.0.0.1:8000/
 - Swagger UI (dokumentasi interaktif): http://127.0.0.1:8000/docs
 
